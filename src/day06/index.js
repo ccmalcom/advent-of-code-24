@@ -5,8 +5,7 @@ const parseInput = (rawInput) => rawInput;
 const part1 = (rawInput) => {
   const input = parseInput(rawInput);
   const rows = input.split("\n");
-  const gridWidth = rows[0].length;
-  const gridHeight = rows.length;
+
 
   const guardStartPosition = {
     x: rows[rows.findIndex((row) => row.includes("^"))].indexOf("^"),
@@ -18,73 +17,81 @@ const part1 = (rawInput) => {
   //if it hits a '#' symbol, it will turn 90 degrees clockwise and then continue moving until it hits a '#' symbol
   //this continues until guard leaves the grid
   //count the number of steps the guard takes
+  const visitedPositions = new Set();
+  let currentPos = { ...guardStartPosition };
   let steps = 0;
-  const currentPos = { ...guardStartPosition };
-  let newPos = tryMove(currentPos, rows);
-  while (newPos) {
-    console.log("newPos", newPos);
-    console.log('steps', steps);
+  while (currentPos) {
+    // Mark current position as visited
+    visitedPositions.add(`${currentPos.x},${currentPos.y}`);
+
+    // Attempt the next move
+    currentPos = tryMove(currentPos, rows);
     steps++;
-    currentPos.x = newPos.x;
-    currentPos.y = newPos.y;
-    currentPos.direction = newPos.direction;
-    newPos = tryMove(currentPos, rows);
   }
 
-  return steps;
+  return visitedPositions.size;
+
 };
 
-const tryMove = (currentPos, grid) => {
-  //try moving in the current direction
-  let newPos = { ...currentPos };
-  switch (currentPos.direction) {
-    case 0:
-      newPos.y -= 1;
-      break;
-    case 1:
-      newPos.x += 1;
-      break;
-    case 2:
-      newPos.y += 1;
-      break;
-    case 3:
-      newPos.x -= 1;
-      break;
+const tryMove = (pos, grid) => {
+  // Attempt to move forward
+  let newPos = { ...pos };
+  switch (pos.direction) {
+    case 0: newPos.y -= 1; break; // Up
+    case 1: newPos.x += 1; break; // Right
+    case 2: newPos.y += 1; break; // Down
+    case 3: newPos.x -= 1; break; // Left
   }
-  if (newPos.y < 0 || newPos.y >= grid.length || newPos.x < 0 || newPos.x >= grid[0].length) {
-    //out of bounds
-    return null;
+
+  // Check bounds
+  if (
+    newPos.y < 0 || newPos.y >= grid.length ||
+    newPos.x < 0 || newPos.x >= grid[0].length
+  ) {
+    return null; // Out of bounds
   }
+
+  // Check for wall
   if (grid[newPos.y][newPos.x] === "#") {
-    //hit a wall, advance direction
-    console.log("hit wall");
-    newPos.direction = (currentPos.direction + 1) % 4;
-    switch (newPos.direction) {
-      case 0:
-        newPos.y -= 1;
-        newPos.x += 1;
-        break;
-      case 1:
-        newPos.y += 1;
-        newPos.x += 1;
-        break;
-      case 2:
-        newPos.y += 1;
-        newPos.x -= 1;
-        break;
-      case 3:
-        newPos.x -= 1;
-        newPos.y -= 1;
-        break;
-    }
+    // Turn 90 degrees clockwise
+    newPos = { ...pos, direction: (pos.direction + 1) % 4 };
+    return tryMove(newPos, grid); // Retry with new direction
   }
-  return newPos;
-}
+
+  return newPos; // Valid move
+};
+
 
 const part2 = (rawInput) => {
   const input = parseInput(rawInput);
   const rows = input.split("\n");
-  return;
+
+
+  const guardStartPosition = {
+    x: rows[rows.findIndex((row) => row.includes("^"))].indexOf("^"),
+    y: rows.findIndex((row) => row.includes("^")),
+    direction: 0 // 0 = up, 1 = right, 2 = down, 3 = left
+  }
+  console.log("guardStartPos", guardStartPosition);
+  //guard will 'move' from starting direction until it hits a '#' symbol
+  //if it hits a '#' symbol, it will turn 90 degrees clockwise and then continue moving until it hits a '#' symbol
+  //this continues until guard leaves the grid
+  //count the number of steps the guard takes
+  const visitedPositions = new Set();
+  let currentPos = { ...guardStartPosition };
+  let steps = 0;
+  while (currentPos) {
+    // Mark current position as visited
+    visitedPositions.add(`${currentPos.x},${currentPos.y}`);
+    if (currentPos.direction === 3 && currentPos.y === guardStartPosition.y) {
+      console.log("currentPos", currentPos);
+    }
+    // Attempt the next move
+    currentPos = tryMove(currentPos, rows);
+    steps++;
+  }
+
+  return visitedPositions.size;
 };
 
 run({
